@@ -21,6 +21,12 @@ export default function GamePage({ params }: PageProps<"/games/[id]">) {
 type Category = { id: number; name: string; [key: string]: unknown };
 
 const DIVISIONS = ["MM", "WM"] as const;
+const CATEGORY_ORDER = ["touches", "dead disc pickups", "assists", "goals"];
+
+function categoryRank(label: string) {
+  const i = CATEGORY_ORDER.indexOf(label.toLowerCase());
+  return i === -1 ? CATEGORY_ORDER.length : i;
+}
 
 // Category names carry the division, e.g. "MM Goals" / "Goals (WM)".
 function splitDivision(name: string) {
@@ -55,8 +61,7 @@ async function Game({ params }: { params: Promise<{ id: string }> }) {
         .map((c) => ({ c, ...splitDivision(c.name) }))
         .filter((x) => x.division === division)
         .map(({ c, label }) => ({ categoryId: c.id, name: label, count: counts.get(c.id) ?? 0 }))
-        // Keep MM / WM category lists in the same label order.
-        .sort((a, b) => a.name.localeCompare(b.name)),
+        .sort((a, b) => categoryRank(a.name) - categoryRank(b.name) || a.name.localeCompare(b.name)),
     }))
     .filter((g) => g.rows.length > 0);
 
